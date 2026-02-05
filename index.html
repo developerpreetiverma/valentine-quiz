@@ -123,6 +123,24 @@
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
       }
 
+      /* Dodge message styling */
+      #dodgeMessage {
+        position: fixed;
+        font-size: 18px;
+        font-weight: bold;
+        color: #2a9d8f;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        pointer-events: none;
+        z-index: 9998;
+        opacity: 0;
+        transition: opacity 0.3s ease, left 0.3s ease, top 0.3s ease;
+        white-space: nowrap;
+      }
+
+      #dodgeMessage.show {
+        opacity: 1;
+      }
+
       /* Optional: avoid press-shrink on any button */
       .btn:active,
       #yesBtn:active,
@@ -138,6 +156,9 @@
         }
         p {
           font-size: 15px;
+        }
+        #dodgeMessage {
+          font-size: 16px;
         }
       }
     </style>
@@ -199,7 +220,7 @@
     <section id="page-5" class="page">
       <div class="container">
         <h2>Valentine Quiz 💖</h2>
-        <p>Question 5: What’s my favorite thing?</p>
+        <p>Question 5: What's my favorite thing?</p>
         <div class="btn-row">
           <button class="btn" data-next="page-final">You</button>
           <button class="btn" data-next="page-final">Only You</button>
@@ -234,6 +255,9 @@
       </div>
     </section>
 
+    <!-- Dodge message overlay -->
+    <div id="dodgeMessage"></div>
+
     <script>
       // ------------------ Page navigation ------------------
       const pages = Array.from(document.querySelectorAll(".page"));
@@ -250,10 +274,48 @@
       const noBtn = document.getElementById("noBtn");
       const angry = document.getElementById("angry");
       const success = document.getElementById("success");
+      const dodgeMessage = document.getElementById("dodgeMessage");
+
+      // Funny messages that rotate
+      const funnyMessages = [
+        "Catch me if you can! 😜",
+        "Too slow! 🏃‍♂️",
+        "Nope! Try again! 😏",
+        "Almost there! 😂",
+        "Getting closer! 🎯",
+        "Whoops! Missed me! 😆",
+        "Not today! 🙈",
+        "Better luck next time! 🍀",
+        "You gotta be faster! ⚡",
+        "Nice try! 😝"
+      ];
 
       let dodgeEnabled = false; // controls hover/move dodging
       let attempts = 0; // count attempts to click Yes
       let unlocked = false; // after 6 attempts, allow real click
+      let messageTimeout = null;
+
+      // Function to show dodge message
+      function showDodgeMessage() {
+        const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+        dodgeMessage.textContent = randomMessage;
+        
+        // Position message below the Yes button
+        const rect = yesBtn.getBoundingClientRect();
+        dodgeMessage.style.left = `${rect.left + rect.width / 2}px`;
+        dodgeMessage.style.top = `${rect.bottom + 10}px`;
+        dodgeMessage.style.transform = 'translateX(-50%)';
+        
+        dodgeMessage.classList.add("show");
+
+        // Clear any existing timeout
+        if (messageTimeout) clearTimeout(messageTimeout);
+
+        // Hide message after 1 second
+        messageTimeout = setTimeout(() => {
+          dodgeMessage.classList.remove("show");
+        }, 1000);
+      }
 
       // --- Listeners we can add/remove cleanly ---
       function onYesAttempt(ev) {
@@ -265,6 +327,9 @@
 
         attempts++;
         console.log(attempts);
+
+        // Show funny message
+        showDodgeMessage();
 
         // First attempt: switch to fixed so we can move it anywhere
         if (!dodgeEnabled) {
@@ -279,7 +344,7 @@
         }
 
         // Before unlock: keep dodging
-        if (attempts < 6) {
+        if (attempts < 10) {
           jumpToRandomSpot();
         } else {
           unlockYesButton();
@@ -291,7 +356,10 @@
           jumpToRandomSpot();
           attempts++;
           console.log(attempts);
-
+          
+          // Show funny message
+          showDodgeMessage();
+          
           if (attempts < 10) {
             jumpToRandomSpot();
           } else {
@@ -334,6 +402,9 @@
         unlocked = true;
         dodgeEnabled = false;
 
+        // Hide any lingering dodge message
+        dodgeMessage.classList.remove("show");
+
         // Stop ALL dodge-related listeners immediately
         yesBtn.removeEventListener("mousedown", onYesAttempt);
         yesBtn.removeEventListener("mouseenter", onHoverMove);
@@ -360,6 +431,8 @@
       yesBtn.addEventListener("click", () => {
         if (!unlocked) return; // ignore early clicks
         if (success) success.style.display = "block";
+        if (noBtn) noBtn.style.display = "none"; // hide No button
+        if (yesBtn) yesBtn.style.display = "none"; // hide Yes button
       });
 
       // No button shows anger block
