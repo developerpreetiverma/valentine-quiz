@@ -111,6 +111,18 @@
         max-width: 70%;
       }
 
+      /* SUCCESS block after Yes becomes clickable and is clicked */
+      #success {
+        display: none;
+        margin-top: 18px;
+      }
+      #success img {
+        width: 220px;
+        max-width: 80%;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+      }
+
       /* Optional: avoid press-shrink on any button */
       .btn:active,
       #yesBtn:active,
@@ -209,8 +221,13 @@
 
         <div id="angry">
           <h3>😡 HOW DARE YOU!</h3>
-          <!-- You can replace this with your base64 image if you want -->
           <img alt="Angry" src="angryme.jpg" />
+        </div>
+
+        <!-- Shown after 6 attempts & a real click on Yes -->
+        <div id="success">
+          <h3>Yay! You said YES 💞</h3>
+          <img alt="Love" src="happy.jpg" />
         </div>
 
         <div class="nav">6 / 6</div>
@@ -229,23 +246,30 @@
       });
 
       // ------------------ Final page behavior ------------------
-      const finalCard = document.getElementById("final-card");
       const yesBtn = document.getElementById("yesBtn");
       const noBtn = document.getElementById("noBtn");
       const angry = document.getElementById("angry");
+      const success = document.getElementById("success");
 
-      let dodgeEnabled = false;
+      let dodgeEnabled = false; // controls hover/move dodging
+      let attempts = 0; // count attempts to click Yes
+      let unlocked = false; // after 6 attempts, allow real click
 
-      // When user tries to click Yes
+      // --- Listeners we can add/remove cleanly ---
       function onYesAttempt(ev) {
+        // If already unlocked, DO NOT prevent default—let the click happen
+        if (unlocked) return;
+
         ev.preventDefault();
         ev.stopPropagation();
 
-        // Flip to fixed (viewport) only once, at the first attempt
+        attempts++;
+        console.log(attempts);
+
+        // First attempt: switch to fixed so we can move it anywhere
         if (!dodgeEnabled) {
           dodgeEnabled = true;
 
-          // Start from the current on-screen position to avoid a visual jump
           const r = yesBtn.getBoundingClientRect();
           yesBtn.style.position = "fixed";
           yesBtn.style.transform = "none";
@@ -254,13 +278,30 @@
           yesBtn.style.top = `${r.top}px`;
         }
 
-        jumpToRandomSpot();
+        // Before unlock: keep dodging
+        if (attempts < 6) {
+          jumpToRandomSpot();
+        } else {
+          unlockYesButton();
+        }
       }
 
-      // Move Yes anywhere in the viewport
-      function jumpToRandomSpot() {
-        const padding = 8; // keep a little margin from the edges
+      function onHoverMove() {
+        if (dodgeEnabled && !unlocked) {
+          jumpToRandomSpot();
+          attempts++;
+          console.log(attempts);
 
+          if (attempts < 10) {
+            jumpToRandomSpot();
+          } else {
+            unlockYesButton();
+          }
+        }
+      }
+
+      function jumpToRandomSpot() {
+        const padding = 8; // margin from edges
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
@@ -278,27 +319,58 @@
         yesBtn.style.right = "auto";
         yesBtn.style.left = `${newLeft}px`;
         yesBtn.style.top = `${newTop}px`;
+        yesBtn.style.transform = "none"; // avoid centering offset while dodging
       }
 
-      // Keep dodging on hover/move after enabled
-      function onHoverMove() {
-        if (dodgeEnabled) jumpToRandomSpot();
+      function centerYesButton() {
+        yesBtn.style.left = "50%";
+        yesBtn.style.top = "50%";
+        yesBtn.style.transform = "translate(-50%, -50%)";
+        yesBtn.style.bottom = "auto";
+        yesBtn.style.right = "auto";
       }
 
-      // Event bindings (desktop + mobile)
+      function unlockYesButton() {
+        unlocked = true;
+        dodgeEnabled = false;
+
+        // Stop ALL dodge-related listeners immediately
+        yesBtn.removeEventListener("mousedown", onYesAttempt);
+        yesBtn.removeEventListener("mouseenter", onHoverMove);
+        yesBtn.removeEventListener("mousemove", onHoverMove);
+        yesBtn.removeEventListener("touchstart", onYesAttempt);
+
+        // Optional: guard against stray moves
+        yesBtn.style.pointerEvents = "auto";
+
+        // Center and highlight
+        // centerYesButton();
+        yesBtn.textContent = "Yes 💘";
+        yesBtn.style.boxShadow = "0 0 0 4px rgba(42,157,143,0.25)";
+        setTimeout(() => (yesBtn.style.boxShadow = "none"), 800);
+      }
+
+      // --- Bind listeners (desktop + mobile) ---
       yesBtn.addEventListener("mousedown", onYesAttempt);
       yesBtn.addEventListener("mouseenter", onHoverMove);
       yesBtn.addEventListener("mousemove", onHoverMove);
       yesBtn.addEventListener("touchstart", onYesAttempt, { passive: false });
 
+      // After unlock: a normal click shows the success block
+      yesBtn.addEventListener("click", () => {
+        if (!unlocked) return; // ignore early clicks
+        if (success) success.style.display = "block";
+      });
+
       // No button shows anger block
       noBtn.addEventListener("click", () => {
-        angry.style.display = "block";
+        if (angry) angry.style.display = "block";
       });
 
       // Keep inside screen after resize/orientation change
       window.addEventListener("resize", () => {
-        if (dodgeEnabled) jumpToRandomSpot();
+        if (dodgeEnabled && !unlocked) jumpToRandomSpot();
+        if (unlocked) centerYesButton(); // keep centered after unlock
       });
     </script>
   </body>
