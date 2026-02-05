@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valentine Quiz 💘</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --card-w: 360px;
+        --btn-w: 120px;
+        --btn-h: 44px;
+        --gap: 16px;
+      }
+
+      /* Page base */
+      body {
+        font-family: Arial, sans-serif;
+        background: pink;
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      /* One section per screen */
+      .page {
+        display: none;
+        width: min(92vw, var(--card-w));
+      }
+      .page.active {
+        display: block;
+      }
+
+      .container {
+        background: white;
+        padding: 24px 20px 28px;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        position: relative;
+      }
+      h2 {
+        margin: 8px 0 10px;
+      }
+      p {
+        margin: 10px 0 18px;
+        font-size: 16px;
+      }
+
+      /* Shared button appearance and identical size */
+      .btn,
+      #yesBtn,
+      #noBtn {
+        width: var(--btn-w);
+        height: var(--btn-h);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        padding: 0;
+        box-sizing: border-box;
+        background: #efefef;
+        color: #111;
+      }
+
+      /* Generic 2-button row for question pages */
+      .btn-row {
+        display: flex;
+        justify-content: center;
+        gap: var(--gap);
+        margin-top: 8px;
+      }
+
+      /* Progress text */
+      .nav {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #666;
+      }
+
+      /* Final page button colors (same size as above) */
+      #yesBtn {
+        background: #2a9d8f;
+        color: #fff;
+      }
+      #noBtn {
+        background: #e63946;
+        color: #fff;
+      }
+
+      /* On the final page FIRST load:
+       yesBtn should behave like a normal button (NOT fixed).
+       Only after first attempt it becomes fixed via JS. */
+      #yesBtn {
+        position: static; /* in normal flow initially */
+        transform: none; /* no centering offset initially */
+        z-index: auto;
+        touch-action: none; /* improves touch dodge later */
+      }
+
+      /* Anger block on No */
+      #angry {
+        display: none;
+        margin-top: 20px;
+      }
+      #angry img {
+        width: 200px;
+        max-width: 70%;
+      }
+
+      /* Optional: avoid press-shrink on any button */
+      .btn:active,
+      #yesBtn:active,
+      #noBtn:active {
+        transform: none;
+      }
+
+      /* Small-screen tweaks */
+      @media (max-width: 420px) {
+        :root {
+          --btn-w: 112px;
+          --btn-h: 42px;
+        }
+        p {
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Page 1 -->
+    <section id="page-1" class="page active">
+      <div class="container">
+        <h2>Valentine Quiz 💖</h2>
+        <p>Question 1: Do you love me?</p>
+        <div class="btn-row">
+          <button class="btn" data-next="page-2">Yes</button>
+          <button class="btn" data-next="page-2">Of course</button>
+        </div>
+        <div class="nav">1 / 6</div>
+      </div>
+    </section>
+
+    <!-- Page 2 -->
+    <section id="page-2" class="page">
+      <div class="container">
+        <h2>Valentine Quiz 💖</h2>
+        <p>Question 2: Where did we meet the first time?</p>
+        <div class="btn-row">
+          <button class="btn" data-next="page-3">Delhi</button>
+          <button class="btn" data-next="page-3">Gwaliyor</button>
+        </div>
+        <div class="nav">2 / 6</div>
+      </div>
+    </section>
+
+    <!-- Page 3 -->
+    <section id="page-3" class="page">
+      <div class="container">
+        <h2>Valentine Quiz 💖</h2>
+        <p>Question 3: What did I wear on our first date?</p>
+        <div class="btn-row">
+          <button class="btn" data-next="page-4">Traditional</button>
+          <button class="btn" data-next="page-4">Western</button>
+        </div>
+        <div class="nav">3 / 6</div>
+      </div>
+    </section>
+
+    <!-- Page 4 -->
+    <section id="page-4" class="page">
+      <div class="container">
+        <h2>Valentine Quiz 💖</h2>
+        <p>Question 4: Who propose first?</p>
+        <div class="btn-row">
+          <button class="btn" data-next="page-5">Me</button>
+          <button class="btn" data-next="page-5">You</button>
+        </div>
+        <div class="nav">4 / 6</div>
+      </div>
+    </section>
+
+    <!-- Page 5 -->
+    <section id="page-5" class="page">
+      <div class="container">
+        <h2>Valentine Quiz 💖</h2>
+        <p>Question 5: What’s my favorite thing?</p>
+        <div class="btn-row">
+          <button class="btn" data-next="page-final">You</button>
+          <button class="btn" data-next="page-final">Only You</button>
+        </div>
+        <div class="nav">5 / 6</div>
+      </div>
+    </section>
+
+    <!-- Final Page -->
+    <section id="page-final" class="page">
+      <div class="container" id="final-card">
+        <h2>Will you be my Valentine? 💘</h2>
+
+        <!-- SIDE-BY-SIDE initially (same as earlier pages) -->
+        <div class="btn-row">
+          <button id="yesBtn" class="btn">Yes</button>
+          <button id="noBtn" class="btn">No</button>
+        </div>
+
+        <div id="angry">
+          <h3>😡 HOW DARE YOU!</h3>
+          <!-- You can replace this with your base64 image if you want -->
+          <img
+            alt="Angry"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNGtosOZWYsXXiwx2425XJL2Qj03NvSDhKeg&s"
+          />
+        </div>
+
+        <div class="nav">6 / 6</div>
+      </div>
+    </section>
+
+    <script>
+      // ------------------ Page navigation ------------------
+      const pages = Array.from(document.querySelectorAll(".page"));
+      function showPage(id) {
+        pages.forEach((p) => p.classList.toggle("active", p.id === id));
+      }
+      document.addEventListener("click", (e) => {
+        const nextId = e.target?.dataset?.next;
+        if (nextId) showPage(nextId);
+      });
+
+      // ------------------ Final page behavior ------------------
+      const finalCard = document.getElementById("final-card");
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const angry = document.getElementById("angry");
+
+      let dodgeEnabled = false;
+
+      // When user tries to click Yes
+      function onYesAttempt(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        // Flip to fixed (viewport) only once, at the first attempt
+        if (!dodgeEnabled) {
+          dodgeEnabled = true;
+
+          // Start from the current on-screen position to avoid a visual jump
+          const r = yesBtn.getBoundingClientRect();
+          yesBtn.style.position = "fixed";
+          yesBtn.style.transform = "none";
+          yesBtn.style.zIndex = "9999";
+          yesBtn.style.left = `${r.left}px`;
+          yesBtn.style.top = `${r.top}px`;
+        }
+
+        jumpToRandomSpot();
+      }
+
+      // Move Yes anywhere in the viewport
+      function jumpToRandomSpot() {
+        const padding = 8; // keep a little margin from the edges
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        const rect = yesBtn.getBoundingClientRect();
+        const bw = rect.width;
+        const bh = rect.height;
+
+        const maxLeft = Math.max(0, vw - bw - padding);
+        const maxTop = Math.max(0, vh - bh - padding);
+
+        const newLeft = padding + Math.random() * maxLeft;
+        const newTop = padding + Math.random() * maxTop;
+
+        yesBtn.style.bottom = "auto";
+        yesBtn.style.right = "auto";
+        yesBtn.style.left = `${newLeft}px`;
+        yesBtn.style.top = `${newTop}px`;
+      }
+
+      // Keep dodging on hover/move after enabled
+      function onHoverMove() {
+        if (dodgeEnabled) jumpToRandomSpot();
+      }
+
+      // Event bindings (desktop + mobile)
+      yesBtn.addEventListener("mousedown", onYesAttempt);
+      yesBtn.addEventListener("mouseenter", onHoverMove);
+      yesBtn.addEventListener("mousemove", onHoverMove);
+      yesBtn.addEventListener("touchstart", onYesAttempt, { passive: false });
+
+      // No button shows anger block
+      noBtn.addEventListener("click", () => {
+        angry.style.display = "block";
+      });
+
+      // Keep inside screen after resize/orientation change
+      window.addEventListener("resize", () => {
+        if (dodgeEnabled) jumpToRandomSpot();
+      });
+    </script>
+  </body>
+</html>
